@@ -26,7 +26,6 @@ Checkov scans the code for misconfigurations
 Issues found No issues
 Pipeline FAILS ❌ Pipeline PASSES ✅
 
-
 ## Before vs After Example
 
 This repo includes a real before/after comparison to demonstrate the scanner in action:
@@ -60,10 +59,11 @@ cicd-security-scanner/
 │ │ └── s3-bucket.tf # Intentionally insecure (for demo)
 │ └── fixed-examples/
 │ └── s3-bucket-secure.tf # Fully secured, passes all checks
+├── docs/
+│ └── screenshots/
+│ ├── pipeline-fail.png
+│ └── pipeline-pass.png
 └── README.md
-
-
-
 
 ## Running the Scanner Locally
 
@@ -74,9 +74,13 @@ checkov -f terraform/fixed-examples/s3-bucket-secure.tf
 
 ## Pipeline Screenshots
 
-*(screenshots below show the pipeline blocking insecure code, and passing secure code)*
+**Pipeline blocked (insecure code):**
 
-<!-- Add your screenshots here after uploading them to the repo -->
+![Pipeline Failed](docs/screenshots/pipeline-fail.png)
+
+**Pipeline passed (secure code):**
+
+![Pipeline Passed](docs/screenshots/pipeline-pass.png)
 
 ## What This Demonstrates
 
@@ -90,3 +94,4 @@ checkov -f terraform/fixed-examples/s3-bucket-secure.tf
 - Add more resource types (EC2 security groups, IAM policies)
 - Post scan results as automatic PR comments
 - Add a simple dashboard summarizing scan history
+
