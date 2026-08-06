@@ -9,13 +9,48 @@ on:
 jobs:
   checkov-scan:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Run Checkov
+        id: checkov
         uses: bridgecrewio/checkov-action@master
         with:
           directory: terraform/fixed-examples/
           quiet: true
-          soft_fail: false
+          soft_fail: true
+          output_format: cli
+          output_file_path: console,checkov-results.txt
+
+      - name: Post results as PR comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let output = 'Checkov scan completed, but no results file was found.';
+            try {
+              output = fs.readFileSync('checkov-results.txt', 'utf8');
+              if (output.length > 60000) {
+                output = output.substring(0, 60000) + '\n\n... (truncated)';
+              }
+            } catch (e) {
+              console.log('No results file found:', e.message);
+            }
+            const body = `### Checkov Security Scan Results\n\n\`\`\`\n${output}\n\`\`\``;
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+      - name: Fail if issues found
+        if: steps.checkov.outputs.failed_checks_count != '0' && steps.checkov.outputs.failed_checks_count != ''
+        run: |
+          echo "Checkov found failed checks. Failing the build."
+          exit 1
