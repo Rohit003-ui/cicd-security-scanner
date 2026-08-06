@@ -1,3 +1,5 @@
+# Test change to trigger PR comment workflow
+
 # This is an INTENTIONALLY insecure EC2 security group, for testing our scanner
 
 resource "aws_security_group" "insecure_sg" {
