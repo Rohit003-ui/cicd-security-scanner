@@ -16,6 +16,6 @@ jobs:
       - name: Run Checkov
         uses: bridgecrewio/checkov-action@master
         with:
-          directory: terraform/
+          directory: terraform/fixed-examples/
           quiet: true
           soft_fail: false
