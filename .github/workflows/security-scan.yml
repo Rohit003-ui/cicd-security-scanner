@@ -16,15 +16,19 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Run Checkov
-        id: checkov
-        uses: bridgecrewio/checkov-action@master
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          directory: terraform/fixed-examples/
-          quiet: true
-          soft_fail: true
-          output_format: cli
-          output_file_path: console,checkov-results.txt
+          python-version: '3.11'
+
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Run Checkov and save results
+        id: checkov
+        run: |
+          checkov -d terraform/fixed-examples/ --compact > checkov-results.txt 2>&1 || true
+          cat checkov-results.txt
 
       - name: Post results as PR comment
         if: github.event_name == 'pull_request'
@@ -32,14 +36,14 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-            let output = 'Checkov scan completed, but no results file was found.';
+            let output = 'No results file found.';
             try {
               output = fs.readFileSync('checkov-results.txt', 'utf8');
               if (output.length > 60000) {
                 output = output.substring(0, 60000) + '\n\n... (truncated)';
               }
             } catch (e) {
-              console.log('No results file found:', e.message);
+              console.log('Error reading results:', e.message);
             }
             const body = `### Checkov Security Scan Results\n\n\`\`\`\n${output}\n\`\`\``;
             github.rest.issues.createComment({
@@ -50,7 +54,4 @@ jobs:
             });
 
       - name: Fail if issues found
-        if: steps.checkov.outputs.failed_checks_count != '0' && steps.checkov.outputs.failed_checks_count != ''
-        run: |
-          echo "Checkov found failed checks. Failing the build."
-          exit 1
+        run: checkov -d terraform/fixed-examples/ --compact
